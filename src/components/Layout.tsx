@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home, Search, Calendar, Bell, User, Menu, X, LogOut,
-  Stethoscope, LayoutDashboard, Users, Baby, Video
+  Stethoscope, LayoutDashboard, Users, Video
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -44,13 +44,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Top Bar */}
-      <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-lg border-b shadow-card">
+      <header className="sticky top-0 z-50 bg-primary shadow-card border-b border-primary/80">
         <div className="container flex items-center justify-between h-14 px-4">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center">
-              <Baby className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="font-display font-bold text-foreground text-lg hidden sm:block">PediCare</span>
+            <img src="/GCH-Logo.png" alt="GCH Logo" className="h-9 w-auto" />
+            <span className="font-display font-bold text-primary-foreground text-sm hidden sm:block leading-tight">
+              Gertrude's Children's<br />Hospital
+            </span>
           </Link>
 
           {/* Desktop nav */}
@@ -58,9 +58,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             {navItems.map(item => (
               <Link key={item.path} to={item.path}>
                 <Button
-                  variant={location.pathname === item.path ? 'default' : 'ghost'}
+                  variant="ghost"
                   size="sm"
-                  className="gap-2"
+                  className={`gap-2 text-primary-foreground hover:bg-white/20 hover:text-white ${location.pathname === item.path ? 'bg-white/25 text-white' : ''}`}
                 >
                   <item.icon className="w-4 h-4" />
                   {item.label}
@@ -70,14 +70,14 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </nav>
 
           <div className="flex items-center gap-2">
-            <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="hidden sm:flex items-center gap-2 text-sm text-primary-foreground/80">
               <User className="w-4 h-4" />
               <span>{user?.name}</span>
             </div>
-            <Button variant="ghost" size="icon" onClick={handleLogout} className="text-muted-foreground">
+            <Button variant="ghost" size="icon" onClick={handleLogout} className="text-primary-foreground hover:bg-white/20">
               <LogOut className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <Button variant="ghost" size="icon" className="md:hidden text-primary-foreground hover:bg-white/20" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
           </div>
@@ -96,8 +96,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 {navItems.map(item => (
                   <Link key={item.path} to={item.path} onClick={() => setMobileMenuOpen(false)}>
                     <Button
-                      variant={location.pathname === item.path ? 'default' : 'ghost'}
-                      className="w-full justify-start gap-3"
+                      variant="ghost"
+                      className={`w-full justify-start gap-3 ${location.pathname === item.path ? 'bg-primary/10 text-primary font-semibold' : ''}`}
                     >
                       <item.icon className="w-4 h-4" />
                       {item.label}

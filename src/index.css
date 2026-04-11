@@ -6,85 +6,91 @@
 
 @layer base {
   :root {
-    --background: 160 20% 97%;
-    --foreground: 210 25% 15%;
+    /* GCH Brand Colors:
+       Background: Light pink/salmon  #FBE9E9
+       Primary:    Teal               #2B9EA0  (hsl 181 57% 40%)
+       Dark teal:  Deep teal          #1A5F73  (hsl 196 62% 28%)
+       Accent:     Orange/amber       #F7941D  (hsl 33 93% 55%)
+    */
+    --background: 350 50% 96%;
+    --foreground: 196 62% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 210 25% 15%;
+    --card-foreground: 196 62% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 25% 15%;
+    --popover-foreground: 196 62% 15%;
 
-    --primary: 174 62% 40%;
+    --primary: 198 100% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 200 25% 94%;
-    --secondary-foreground: 210 25% 25%;
+    --secondary: 181 30% 92%;
+    --secondary-foreground: 196 62% 20%;
 
-    --muted: 200 20% 95%;
-    --muted-foreground: 210 10% 50%;
+    --muted: 350 30% 94%;
+    --muted-foreground: 196 20% 48%;
 
-    --accent: 38 92% 55%;
+    --accent: 33 93% 55%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 200 20% 90%;
-    --input: 200 20% 90%;
-    --ring: 174 62% 40%;
+    --border: 350 20% 88%;
+    --input: 350 20% 88%;
+    --ring: 198 100% 42%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 174 62% 40%;
+    --sidebar-background: 198 100% 30%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 198 100% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 200 25% 94%;
-    --sidebar-accent-foreground: 210 25% 25%;
-    --sidebar-border: 200 20% 90%;
-    --sidebar-ring: 174 62% 40%;
+    --sidebar-accent: 198 100% 38%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 198 100% 35%;
+    --sidebar-ring: 198 100% 42%;
 
     /* Custom tokens */
     --success: 152 60% 42%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 55%;
+    --warning: 33 93% 55%;
     --warning-foreground: 30 50% 15%;
-    --info: 205 75% 55%;
+    --info: 181 57% 40%;
     --info-foreground: 0 0% 100%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(174, 62%, 40%), hsl(190, 65%, 45%));
-    --gradient-warm: linear-gradient(135deg, hsl(38, 92%, 55%), hsl(25, 90%, 55%));
-    --gradient-hero: linear-gradient(160deg, hsl(174, 62%, 40%) 0%, hsl(200, 70%, 50%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(198, 100%, 42%), hsl(198, 100%, 35%));
+    --gradient-warm: linear-gradient(135deg, hsl(33, 93%, 55%), hsl(20, 90%, 55%));
+    --gradient-hero: linear-gradient(160deg, hsl(198, 100%, 30%) 0%, hsl(198, 100%, 42%) 100%);
 
-    --shadow-card: 0 1px 3px hsl(210 25% 15% / 0.06), 0 1px 2px hsl(210 25% 15% / 0.04);
-    --shadow-elevated: 0 4px 16px hsl(210 25% 15% / 0.08), 0 2px 4px hsl(210 25% 15% / 0.04);
-    --shadow-modal: 0 12px 40px hsl(210 25% 15% / 0.12);
+    --shadow-card: 0 1px 3px hsl(196 62% 15% / 0.06), 0 1px 2px hsl(196 62% 15% / 0.04);
+    --shadow-elevated: 0 4px 16px hsl(196 62% 15% / 0.08), 0 2px 4px hsl(196 62% 15% / 0.04);
+    --shadow-modal: 0 12px 40px hsl(196 62% 15% / 0.12);
 
     --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
     --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
   }
 
   .dark {
-    --background: 210 25% 8%;
-    --foreground: 200 20% 95%;
-    --card: 210 25% 12%;
-    --card-foreground: 200 20% 95%;
-    --popover: 210 25% 12%;
-    --popover-foreground: 200 20% 95%;
-    --primary: 174 62% 45%;
+    --background: 196 62% 8%;
+    --foreground: 350 20% 95%;
+    --card: 196 62% 12%;
+    --card-foreground: 350 20% 95%;
+    --popover: 196 62% 12%;
+    --popover-foreground: 350 20% 95%;
+    --primary: 198 100% 45%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 20% 18%;
-    --secondary-foreground: 200 20% 90%;
-    --muted: 210 20% 18%;
-    --muted-foreground: 200 15% 60%;
-    --accent: 38 92% 55%;
+    --secondary: 196 40% 18%;
+    --secondary-foreground: 350 20% 90%;
+    --muted: 196 40% 18%;
+    --muted-foreground: 196 20% 60%;
+    --accent: 33 93% 55%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62% 45%;
     --destructive-foreground: 0 0% 100%;
-    --border: 210 20% 20%;
-    --input: 210 20% 20%;
-    --ring: 174 62% 45%;
+    --border: 196 40% 20%;
+    --input: 196 40% 20%;
+    --ring: 198 100% 45%;
   }
 }
 

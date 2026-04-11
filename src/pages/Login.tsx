@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Baby, Mail, Lock, Loader2 } from 'lucide-react';
+import { Mail, Lock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
@@ -46,11 +46,9 @@ const Login = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center mx-auto mb-4 shadow-elevated">
-            <Baby className="w-8 h-8 text-primary-foreground" />
-          </div>
-          <h1 className="text-2xl font-display font-bold text-foreground">PediCare</h1>
-          <p className="text-muted-foreground text-sm mt-1">Digital Pediatric Care Platform</p>
+          <img src="/GCH-Logo.png" alt="GCH Logo" className="h-20 w-auto mx-auto mb-4" />
+          <h1 className="text-2xl font-display font-bold text-foreground">Gertrude's Children's Hospital</h1>
+          <p className="text-muted-foreground text-sm mt-1">KindCare Connect — Digital Pediatric Care Platform</p>
         </div>
 
         <Card className="shadow-elevated border-border/50">

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Baby, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { UserRole } from '@/types';
@@ -36,10 +36,9 @@ const Register = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center mx-auto mb-4 shadow-elevated">
-            <Baby className="w-8 h-8 text-primary-foreground" />
-          </div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Join PediCare</h1>
+          <img src="/GCH-Logo.png" alt="GCH Logo" className="h-20 w-auto mx-auto mb-4" />
+          <h1 className="text-2xl font-display font-bold text-foreground">Join KindCare Connect</h1>
+          <p className="text-muted-foreground text-sm mt-1">Gertrude's Children's Hospital</p>
         </div>
 
         <Card className="shadow-elevated border-border/50">
