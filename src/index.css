@@ -129,3 +129,20 @@
     background: var(--gradient-warm);
   }
 }
+
+/* ── Print styles (invoice PDF) ────────────────────────────────────────────── */
+@media print {
+  body > *:not(#invoice-print) {
+    display: none !important;
+  }
+  #invoice-print {
+    display: block !important;
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    margin: 0;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

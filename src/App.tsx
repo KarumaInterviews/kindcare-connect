@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { Loader2 } from "lucide-react";
 import Layout from "@/components/Layout";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
@@ -17,13 +18,20 @@ import Telemedicine from "@/pages/Telemedicine";
 import Notifications from "@/pages/Notifications";
 import DoctorDashboard from "@/pages/DoctorDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
+import Billing from "@/pages/Billing";
+import AdminBilling from "@/pages/AdminBilling";
 import Unauthorized from "@/pages/Unauthorized";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const RootRedirect = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+    </div>
+  );
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (user?.role === 'admin') return <Navigate to="/admin" replace />;
   if (user?.role === 'doctor') return <Navigate to="/doctor" replace />;
@@ -45,6 +53,7 @@ const AppRoutes = () => (
     <Route path="/book/:doctorId" element={<ProtectedRoute allowedRoles={['parent']}><Layout><BookAppointment /></Layout></ProtectedRoute>} />
     <Route path="/appointments" element={<ProtectedRoute allowedRoles={['parent']}><Layout><Appointments /></Layout></ProtectedRoute>} />
     <Route path="/telemedicine" element={<ProtectedRoute allowedRoles={['parent']}><Layout><Telemedicine /></Layout></ProtectedRoute>} />
+    <Route path="/billing" element={<ProtectedRoute allowedRoles={['parent']}><Layout><Billing /></Layout></ProtectedRoute>} />
     <Route path="/notifications" element={<ProtectedRoute><Layout><Notifications /></Layout></ProtectedRoute>} />
 
     {/* Doctor routes */}
@@ -56,6 +65,7 @@ const AppRoutes = () => (
     <Route path="/admin/doctors" element={<ProtectedRoute allowedRoles={['admin']}><Layout><AdminDashboard /></Layout></ProtectedRoute>} />
     <Route path="/admin/patients" element={<ProtectedRoute allowedRoles={['admin']}><Layout><AdminDashboard /></Layout></ProtectedRoute>} />
     <Route path="/admin/appointments" element={<ProtectedRoute allowedRoles={['admin']}><Layout><AdminDashboard /></Layout></ProtectedRoute>} />
+    <Route path="/admin/billing" element={<ProtectedRoute allowedRoles={['admin']}><Layout><AdminBilling /></Layout></ProtectedRoute>} />
 
     <Route path="*" element={<NotFound />} />
   </Routes>
