@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { Loader2 } from "lucide-react";
 import Layout from "@/components/Layout";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
@@ -23,7 +24,12 @@ import NotFound from "@/pages/NotFound";
 const queryClient = new QueryClient();
 
 const RootRedirect = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+    </div>
+  );
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (user?.role === 'admin') return <Navigate to="/admin" replace />;
   if (user?.role === 'doctor') return <Navigate to="/doctor" replace />;

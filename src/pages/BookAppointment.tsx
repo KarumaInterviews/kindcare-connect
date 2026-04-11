@@ -1,38 +1,82 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { mockDoctors, mockChildren } from '@/data/mockData';
+import { doctorsApi, childrenApi, appointmentsApi, type Doctor, type Child } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, MapPin, Video, Star, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Calendar, MapPin, Video, Star, CheckCircle2, ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
 const BookAppointment = () => {
   const { doctorId } = useParams();
   const navigate = useNavigate();
-  const doctor = mockDoctors.find(d => d.id === doctorId);
-  const children = mockChildren.filter(c => c.parentId === 'p1');
+
+  const [doctor, setDoctor] = useState<Doctor | null>(null);
+  const [children, setChildren] = useState<Child[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [childId, setChildId] = useState('');
-  const [day, setDay] = useState('');
-  const [time, setTime] = useState('');
+  const [appointmentDate, setAppointmentDate] = useState('');
+  const [appointmentTime, setAppointmentTime] = useState('');
   const [type, setType] = useState<'physical' | 'virtual'>('physical');
-  const [notes, setNotes] = useState('');
+  const [reason, setReason] = useState('');
+  const [booking, setBooking] = useState(false);
   const [booked, setBooked] = useState(false);
 
+  useEffect(() => {
+    if (!doctorId) return;
+    Promise.all([
+      doctorsApi.get(Number(doctorId)),
+      childrenApi.list({ limit: 50 }),
+    ]).then(([doc, childRes]) => {
+      setDoctor(doc);
+      setChildren(childRes.rows ?? []);
+    }).catch(() => toast.error('Failed to load data'))
+    .finally(() => setLoading(false));
+  }, [doctorId]);
+
+  const handleBook = async () => {
+    if (!childId || !appointmentDate || !appointmentTime) {
+      toast.error('Please fill all required fields');
+      return;
+    }
+    setBooking(true);
+    try {
+      await appointmentsApi.create({
+        doctorId: Number(doctorId),
+        childId: Number(childId),
+        appointmentDate,
+        appointmentTime: `${appointmentTime}:00`,
+        type,
+        reason,
+        durationMinutes: 30,
+      });
+      setBooked(true);
+      toast.success('Appointment booked successfully!');
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to book appointment';
+      toast.error(msg);
+    } finally { setBooking(false); }
+  };
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-48"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+  );
   if (!doctor) return <div className="text-center py-12 text-muted-foreground">Doctor not found</div>;
 
-  const availableSlots = doctor.availability.find(a => a.day === day)?.slots || [];
+  const formatSpecialty = (s: string) => s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const doctorName = doctor.user ? `Dr. ${doctor.user.firstName} ${doctor.user.lastName}` : `Doctor #${doctor.id}`;
 
-  const handleBook = () => {
-    if (!childId || !day || !time) { toast.error('Please fill all required fields'); return; }
-    if (type === 'virtual' && !doctor.acceptsVirtual) { toast.error('This doctor does not accept virtual consultations'); return; }
-    setBooked(true);
-    toast.success('Appointment booked successfully!');
-  };
+  // Generate time slots 08:00 – 16:30 in 30-min intervals
+  const timeSlots: string[] = [];
+  for (let h = 8; h < 17; h++) {
+    timeSlots.push(`${String(h).padStart(2, '0')}:00`);
+    timeSlots.push(`${String(h).padStart(2, '0')}:30`);
+  }
 
   if (booked) {
     return (
@@ -41,8 +85,9 @@ const BookAppointment = () => {
           <CheckCircle2 className="w-10 h-10 text-success" />
         </div>
         <h2 className="text-xl font-display font-bold text-foreground mb-2">Appointment Booked!</h2>
-        <p className="text-muted-foreground text-sm mb-1">{doctor.name} · {day} at {time}</p>
-        <p className="text-muted-foreground text-xs mb-6">{type === 'virtual' ? 'Virtual consultation' : doctor.location}</p>
+        <p className="text-muted-foreground text-sm mb-1">{doctorName}</p>
+        <p className="text-muted-foreground text-sm mb-1">{appointmentDate} at {appointmentTime}</p>
+        <p className="text-muted-foreground text-xs mb-6">{type === 'virtual' ? 'Virtual consultation' : (doctor.location ?? 'Clinic')}</p>
         <div className="flex gap-3">
           <Button variant="outline" onClick={() => navigate('/appointments')}>View Appointments</Button>
           <Button onClick={() => navigate('/parent')}>Go Home</Button>
@@ -50,6 +95,9 @@ const BookAppointment = () => {
       </motion.div>
     );
   }
+
+  // Today's date as min date
+  const today = new Date().toISOString().split('T')[0];
 
   return (
     <div className="space-y-6">
@@ -60,13 +108,13 @@ const BookAppointment = () => {
         <CardContent className="p-4 flex gap-3">
           <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><span className="text-2xl">🩺</span></div>
           <div>
-            <p className="font-semibold text-foreground">{doctor.name}</p>
-            <p className="text-xs text-primary">{doctor.specialty}</p>
+            <p className="font-semibold text-foreground">{doctorName}</p>
+            <p className="text-xs text-primary">{formatSpecialty(doctor.specialty)}</p>
             <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><Star className="w-3 h-3 text-warning fill-warning" />{doctor.rating}</span>
-              <span><MapPin className="w-3 h-3 inline" /> {doctor.location}</span>
+              <span className="flex items-center gap-1"><Star className="w-3 h-3 text-warning fill-warning" />{Number(doctor.averageRating).toFixed(1)}</span>
+              {doctor.location && <span><MapPin className="w-3 h-3 inline" /> {doctor.location}</span>}
             </div>
-            <p className="text-sm font-semibold text-foreground mt-1">${doctor.consultationFee} / visit</p>
+            <p className="text-sm font-semibold text-foreground mt-1">KES {Number(doctor.consultationFee).toLocaleString()} / visit</p>
           </div>
         </CardContent>
       </Card>
@@ -79,7 +127,11 @@ const BookAppointment = () => {
             <Label>Select Child</Label>
             <Select value={childId} onValueChange={setChildId}>
               <SelectTrigger><SelectValue placeholder="Choose a child" /></SelectTrigger>
-              <SelectContent>{children.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+              <SelectContent>
+                {children.map(c => (
+                  <SelectItem key={c.id} value={String(c.id)}>{c.firstName} {c.lastName}</SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
@@ -89,27 +141,23 @@ const BookAppointment = () => {
               <Button variant={type === 'physical' ? 'default' : 'outline'} size="sm" onClick={() => setType('physical')} className="flex-1 gap-1">
                 <MapPin className="w-4 h-4" /> In-Person
               </Button>
-              <Button variant={type === 'virtual' ? 'default' : 'outline'} size="sm" onClick={() => setType('virtual')} className="flex-1 gap-1"
-                disabled={!doctor.acceptsVirtual}>
+              <Button variant={type === 'virtual' ? 'default' : 'outline'} size="sm" onClick={() => setType('virtual')} className="flex-1 gap-1">
                 <Video className="w-4 h-4" /> Virtual
               </Button>
             </div>
           </div>
 
           <div>
-            <Label>Select Day</Label>
-            <Select value={day} onValueChange={v => { setDay(v); setTime(''); }}>
-              <SelectTrigger><SelectValue placeholder="Choose a day" /></SelectTrigger>
-              <SelectContent>{doctor.availability.map(a => <SelectItem key={a.day} value={a.day}>{a.day}</SelectItem>)}</SelectContent>
-            </Select>
+            <Label>Appointment Date</Label>
+            <Input type="date" min={today} value={appointmentDate} onChange={e => setAppointmentDate(e.target.value)} />
           </div>
 
-          {day && (
+          {appointmentDate && (
             <div>
               <Label>Select Time</Label>
-              <div className="grid grid-cols-3 gap-2 mt-1">
-                {availableSlots.map(slot => (
-                  <Button key={slot} variant={time === slot ? 'default' : 'outline'} size="sm" onClick={() => setTime(slot)}>
+              <div className="grid grid-cols-4 gap-2 mt-1">
+                {timeSlots.map(slot => (
+                  <Button key={slot} variant={appointmentTime === slot ? 'default' : 'outline'} size="sm" onClick={() => setAppointmentTime(slot)}>
                     {slot}
                   </Button>
                 ))}
@@ -118,11 +166,12 @@ const BookAppointment = () => {
           )}
 
           <div>
-            <Label>Notes (optional)</Label>
-            <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Any concerns or notes for the doctor..." />
+            <Label>Reason / Notes</Label>
+            <Textarea value={reason} onChange={e => setReason(e.target.value)} placeholder="Describe the reason for the visit..." />
           </div>
 
-          <Button onClick={handleBook} className="w-full" disabled={!childId || !day || !time}>
+          <Button onClick={handleBook} className="w-full" disabled={booking || !childId || !appointmentDate || !appointmentTime}>
+            {booking ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Calendar className="w-4 h-4 mr-2" />}
             Confirm Booking
           </Button>
         </CardContent>

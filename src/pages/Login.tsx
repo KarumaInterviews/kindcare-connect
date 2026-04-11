@@ -9,12 +9,18 @@ import { Mail, Lock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
+const roleHome: Record<string, string> = { admin: '/admin', doctor: '/doctor', parent: '/parent' };
+
 const Login = () => {
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const redirectByRole = (role?: string) => {
+    navigate(roleHome[role ?? 'parent'] ?? '/parent', { replace: true });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,23 +29,27 @@ const Login = () => {
     setLoading(false);
     if (success) {
       toast.success('Welcome back!');
-      // Role-based redirect
-      if (email === 'admin@demo.com') navigate('/admin');
-      else if (email === 'doctor@demo.com') navigate('/doctor');
-      else navigate('/parent');
+      // user state updates asynchronously; read role from localStorage as fallback
+      const stored = localStorage.getItem('user');
+      const role = stored ? JSON.parse(stored).role : user?.role;
+      redirectByRole(role);
     } else {
-      toast.error('Invalid credentials. Try demo accounts below.');
+      toast.error('Invalid credentials. Please check your email and password.');
     }
   };
 
-  const quickLogin = async (email: string) => {
+  const quickLogin = async (email: string, password: string) => {
     setLoading(true);
-    await login(email, 'demo');
+    const success = await login(email, password);
     setLoading(false);
-    toast.success('Welcome!');
-    if (email === 'admin@demo.com') navigate('/admin');
-    else if (email === 'doctor@demo.com') navigate('/doctor');
-    else navigate('/parent');
+    if (success) {
+      toast.success('Welcome!');
+      const stored = localStorage.getItem('user');
+      const role = stored ? JSON.parse(stored).role : user?.role;
+      redirectByRole(role);
+    } else {
+      toast.error('Login failed');
+    }
   };
 
   return (
@@ -83,14 +93,14 @@ const Login = () => {
             <div className="mt-6">
               <p className="text-xs text-muted-foreground text-center mb-3">Quick demo login</p>
               <div className="flex flex-col gap-2">
-                <Button variant="outline" size="sm" onClick={() => quickLogin('parent@demo.com')} className="text-xs justify-start gap-2">
-                  👨‍👩‍👧 Parent — parent@demo.com
+                <Button variant="outline" size="sm" onClick={() => quickLogin('parent1@gertrudes.com', 'Password@123')} className="text-xs justify-start gap-2" disabled={loading}>
+                  👨‍👩‍👧 Parent — parent1@gertrudes.com
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => quickLogin('doctor@demo.com')} className="text-xs justify-start gap-2">
-                  🩺 Doctor — doctor@demo.com
+                <Button variant="outline" size="sm" onClick={() => quickLogin('doctor1@gertrudes.com', 'Password@123')} className="text-xs justify-start gap-2" disabled={loading}>
+                  🩺 Doctor — doctor1@gertrudes.com
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => quickLogin('admin@demo.com')} className="text-xs justify-start gap-2">
-                  🔧 Admin — admin@demo.com
+                <Button variant="outline" size="sm" onClick={() => quickLogin('admin@gertrudes.com', 'Admin@1234')} className="text-xs justify-start gap-2" disabled={loading}>
+                  🔧 Admin — admin@gertrudes.com
                 </Button>
               </div>
             </div>
