@@ -13,7 +13,7 @@ const Appointments = () => {
 
   useEffect(() => {
     appointmentsApi.list({ limit: 100 })
-      .then(r => setAppointments(r.rows ?? []))
+      .then(r => setAppointments(r.data ?? []))
       .catch(() => toast.error('Failed to load appointments'))
       .finally(() => setLoading(false));
   }, []);

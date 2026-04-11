@@ -23,9 +23,9 @@ const ParentDashboard = () => {
           appointmentsApi.list({ status: 'pending,confirmed', limit: 5 }),
           notificationsApi.list({ isRead: false, limit: 1 }),
         ]);
-        setChildren(childRes.rows ?? []);
-        setUpcoming(apptRes.rows ?? []);
-        setUnreadCount(notifRes.count ?? 0);
+        setChildren(childRes.data ?? []);
+        setUpcoming(apptRes.data ?? []);
+        setUnreadCount(notifRes.pagination?.total ?? 0);
       } catch { /* silent */ }
       finally { setLoading(false); }
     };

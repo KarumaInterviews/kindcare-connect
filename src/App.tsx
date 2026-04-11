@@ -18,6 +18,8 @@ import Telemedicine from "@/pages/Telemedicine";
 import Notifications from "@/pages/Notifications";
 import DoctorDashboard from "@/pages/DoctorDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
+import Billing from "@/pages/Billing";
+import AdminBilling from "@/pages/AdminBilling";
 import Unauthorized from "@/pages/Unauthorized";
 import NotFound from "@/pages/NotFound";
 
@@ -51,6 +53,7 @@ const AppRoutes = () => (
     <Route path="/book/:doctorId" element={<ProtectedRoute allowedRoles={['parent']}><Layout><BookAppointment /></Layout></ProtectedRoute>} />
     <Route path="/appointments" element={<ProtectedRoute allowedRoles={['parent']}><Layout><Appointments /></Layout></ProtectedRoute>} />
     <Route path="/telemedicine" element={<ProtectedRoute allowedRoles={['parent']}><Layout><Telemedicine /></Layout></ProtectedRoute>} />
+    <Route path="/billing" element={<ProtectedRoute allowedRoles={['parent']}><Layout><Billing /></Layout></ProtectedRoute>} />
     <Route path="/notifications" element={<ProtectedRoute><Layout><Notifications /></Layout></ProtectedRoute>} />
 
     {/* Doctor routes */}
@@ -62,6 +65,7 @@ const AppRoutes = () => (
     <Route path="/admin/doctors" element={<ProtectedRoute allowedRoles={['admin']}><Layout><AdminDashboard /></Layout></ProtectedRoute>} />
     <Route path="/admin/patients" element={<ProtectedRoute allowedRoles={['admin']}><Layout><AdminDashboard /></Layout></ProtectedRoute>} />
     <Route path="/admin/appointments" element={<ProtectedRoute allowedRoles={['admin']}><Layout><AdminDashboard /></Layout></ProtectedRoute>} />
+    <Route path="/admin/billing" element={<ProtectedRoute allowedRoles={['admin']}><Layout><AdminBilling /></Layout></ProtectedRoute>} />
 
     <Route path="*" element={<NotFound />} />
   </Routes>

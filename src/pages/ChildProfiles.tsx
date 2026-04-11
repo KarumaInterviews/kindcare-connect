@@ -29,7 +29,7 @@ const ChildProfiles = () => {
 
   useEffect(() => {
     childrenApi.list({ limit: 100 }).then(r => {
-      setChildren(r.rows ?? []);
+      setChildren(r.data ?? []);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -39,7 +39,7 @@ const ChildProfiles = () => {
   useEffect(() => {
     if (selectedChild) {
       medicalRecordsApi.list({ childId: selectedChild.id, limit: 5 })
-        .then(r => setRecords(r.rows ?? [])).catch(() => {});
+        .then(r => setRecords(r.data ?? [])).catch(() => {});
     }
   }, [selectedChild]);
 

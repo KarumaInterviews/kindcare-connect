@@ -30,7 +30,7 @@ const DoctorDiscovery = () => {
       const params: Record<string, unknown> = { limit: 50, isAvailable: true };
       if (specialty !== 'All') params.specialty = specialty;
       const res = await doctorsApi.list(params);
-      const rows = res.rows ?? [];
+      const rows = res.data ?? [];
       setDoctors(rows);
       const locs = Array.from(new Set(rows.map(d => d.location).filter(Boolean))) as string[];
       setLocations(['All', ...locs]);

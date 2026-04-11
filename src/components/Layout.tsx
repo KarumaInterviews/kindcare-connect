@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home, Search, Calendar, Bell, User, Menu, X, LogOut,
-  Stethoscope, LayoutDashboard, Users, Video
+  Stethoscope, LayoutDashboard, Users, Receipt
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -23,6 +23,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     { path: '/parent', icon: Home, label: 'Home' },
     { path: '/doctors', icon: Search, label: 'Doctors' },
     { path: '/appointments', icon: Calendar, label: 'Visits' },
+    { path: '/billing', icon: Receipt, label: 'Billing' },
     { path: '/notifications', icon: Bell, label: 'Alerts' },
   ];
 
@@ -36,7 +37,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     { path: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/admin/doctors', icon: Stethoscope, label: 'Doctors' },
     { path: '/admin/patients', icon: Users, label: 'Patients' },
-    { path: '/admin/appointments', icon: Calendar, label: 'Visits' },
+    { path: '/admin/billing', icon: Receipt, label: 'Billing' },
   ];
 
   const navItems = user?.role === 'admin' ? adminNav : user?.role === 'doctor' ? doctorNav : parentNav;

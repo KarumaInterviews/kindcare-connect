@@ -34,7 +34,7 @@ const BookAppointment = () => {
       childrenApi.list({ limit: 50 }),
     ]).then(([doc, childRes]) => {
       setDoctor(doc);
-      setChildren(childRes.rows ?? []);
+      setChildren(childRes.data ?? []);
     }).catch(() => toast.error('Failed to load data'))
     .finally(() => setLoading(false));
   }, [doctorId]);

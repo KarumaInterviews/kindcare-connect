@@ -22,7 +22,7 @@ const Notifications = () => {
 
   useEffect(() => {
     notificationsApi.list({ limit: 50 })
-      .then(r => setNotifications(r.rows ?? []))
+      .then(r => setNotifications(r.data ?? []))
       .catch(() => toast.error('Failed to load notifications'))
       .finally(() => setLoading(false));
   }, []);

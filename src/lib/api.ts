@@ -142,6 +142,33 @@ export const adminApi = {
   analytics: () => request<Analytics>({ method: 'GET', url: '/analytics/summary' }),
 };
 
+// ── Billing ───────────────────────────────────────────────────────────────────
+export const billingApi = {
+  // Invoices
+  listInvoices: (params?: Record<string, unknown>) =>
+    request<PaginatedResponse<Invoice>>({ method: 'GET', url: '/billing/invoices', params }),
+
+  getInvoice: (id: number) =>
+    request<Invoice>({ method: 'GET', url: `/billing/invoices/${id}` }),
+
+  generateInvoice: (appointmentId: number) =>
+    request<Invoice>({ method: 'POST', url: '/billing/invoices/generate', data: { appointmentId } }),
+
+  // Payments
+  listPayments: (params?: Record<string, unknown>) =>
+    request<PaginatedResponse<Payment>>({ method: 'GET', url: '/billing/payments', params }),
+
+  createPayment: (data: CreatePaymentPayload) =>
+    request<PaymentInitResponse>({ method: 'POST', url: '/billing/payments', data }),
+
+  getPaymentStatus: (paymentId: number) =>
+    request<Payment>({ method: 'GET', url: `/billing/payments/${paymentId}/status` }),
+
+  // Admin
+  summary: () =>
+    request<BillingSummary>({ method: 'GET', url: '/billing/summary' }),
+};
+
 // ── Queue ─────────────────────────────────────────────────────────────────────
 export const queueApi = {
   list: (params?: Record<string, unknown>) =>
@@ -333,6 +360,11 @@ export interface AdminDashboard {
   completedAppointments: number;
   cancelledAppointments: number;
   recentAppointments?: Appointment[];
+  totalRevenue?: number;
+  monthRevenue?: number;
+  totalInvoices?: number;
+  paidInvoices?: number;
+  unpaidInvoices?: number;
 }
 
 export interface Analytics {
@@ -343,10 +375,15 @@ export interface Analytics {
 }
 
 export interface PaginatedResponse<T> {
-  rows: T[];
-  count: number;
-  totalPages: number;
-  currentPage: number;
+  data: T[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
 }
 
 export interface RegisterPayload {
@@ -358,6 +395,89 @@ export interface RegisterPayload {
   role: 'parent' | 'doctor' | 'admin';
   licenseNumber?: string;
   specialty?: string;
+}
+
+export interface LineItem {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
+export interface Invoice {
+  id: number;
+  invoiceNumber: string;
+  appointmentId: number;
+  childId: number;
+  parentId: number;
+  doctorId: number;
+  issueDate: string;
+  dueDate: string;
+  lineItems: LineItem[];
+  subtotal: number;
+  taxRate: number;
+  taxAmount: number;
+  totalAmount: number;
+  currency: string;
+  status: 'draft' | 'issued' | 'paid' | 'overdue' | 'cancelled' | 'waived';
+  notes?: string;
+  paidAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  doctor?: Doctor;
+  child?: Child;
+  parent?: Parent;
+  appointment?: Appointment;
+  payments?: Payment[];
+}
+
+export interface Payment {
+  id: number;
+  invoiceId: number;
+  parentId: number;
+  amount: number;
+  currency: string;
+  method: 'mpesa' | 'card' | 'cash' | 'insurance' | 'bank_transfer';
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
+  reference?: string;
+  mpesaCode?: string;
+  phoneNumber?: string;
+  cardLast4?: string;
+  insuranceProvider?: string;
+  insurancePolicyNumber?: string;
+  processingFee: number;
+  notes?: string;
+  paidAt?: string;
+  failureReason?: string;
+  createdAt: string;
+  invoice?: Invoice;
+}
+
+export interface PaymentInitResponse {
+  paymentId: number;
+  reference: string;
+  mpesaCode?: string;
+  status: string;
+  willComplete: boolean;
+}
+
+export interface CreatePaymentPayload {
+  invoiceId: number;
+  method: 'mpesa' | 'card' | 'cash' | 'insurance' | 'bank_transfer';
+  phoneNumber?: string;
+  cardLast4?: string;
+  insuranceProvider?: string;
+  insurancePolicyNumber?: string;
+}
+
+export interface BillingSummary {
+  totalRevenue: number;
+  monthRevenue: number;
+  pendingAmount: number;
+  totalInvoices: number;
+  paidInvoices: number;
+  overdueInvoices: number;
+  unpaidInvoices: number;
 }
 
 export default api;
