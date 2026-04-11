@@ -20,7 +20,7 @@ const ChildProfiles = () => {
 
   const selectedChild = childId ? children.find(c => c.id === childId) : null;
 
-  const [form, setForm] = useState({ name: '', dateOfBirth: '', gender: 'male' as const, medicalHistory: '', allergies: '', bloodType: '' });
+  const [form, setForm] = useState<{ name: string; dateOfBirth: string; gender: 'male' | 'female' | 'other'; medicalHistory: string; allergies: string; bloodType: string }>({ name: '', dateOfBirth: '', gender: 'male', medicalHistory: '', allergies: '', bloodType: '' });
 
   const resetForm = () => setForm({ name: '', dateOfBirth: '', gender: 'male', medicalHistory: '', allergies: '', bloodType: '' });
 

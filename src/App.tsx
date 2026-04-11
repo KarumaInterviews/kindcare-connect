@@ -1,25 +1,76 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Layout from "@/components/Layout";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import ParentDashboard from "@/pages/ParentDashboard";
+import ChildProfiles from "@/pages/ChildProfiles";
+import DoctorDiscovery from "@/pages/DoctorDiscovery";
+import BookAppointment from "@/pages/BookAppointment";
+import Appointments from "@/pages/Appointments";
+import Telemedicine from "@/pages/Telemedicine";
+import Notifications from "@/pages/Notifications";
+import DoctorDashboard from "@/pages/DoctorDashboard";
+import AdminDashboard from "@/pages/AdminDashboard";
+import Unauthorized from "@/pages/Unauthorized";
+import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
+
+const RootRedirect = () => {
+  const { user, isAuthenticated } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.role === 'admin') return <Navigate to="/admin" replace />;
+  if (user?.role === 'doctor') return <Navigate to="/doctor" replace />;
+  return <Navigate to="/parent" replace />;
+};
+
+const AppRoutes = () => (
+  <Routes>
+    <Route path="/login" element={<Login />} />
+    <Route path="/register" element={<Register />} />
+    <Route path="/unauthorized" element={<Unauthorized />} />
+    <Route path="/" element={<RootRedirect />} />
+
+    {/* Parent routes */}
+    <Route path="/parent" element={<ProtectedRoute allowedRoles={['parent']}><Layout><ParentDashboard /></Layout></ProtectedRoute>} />
+    <Route path="/children" element={<ProtectedRoute allowedRoles={['parent']}><Layout><ChildProfiles /></Layout></ProtectedRoute>} />
+    <Route path="/children/:childId" element={<ProtectedRoute allowedRoles={['parent']}><Layout><ChildProfiles /></Layout></ProtectedRoute>} />
+    <Route path="/doctors" element={<ProtectedRoute allowedRoles={['parent']}><Layout><DoctorDiscovery /></Layout></ProtectedRoute>} />
+    <Route path="/book/:doctorId" element={<ProtectedRoute allowedRoles={['parent']}><Layout><BookAppointment /></Layout></ProtectedRoute>} />
+    <Route path="/appointments" element={<ProtectedRoute allowedRoles={['parent']}><Layout><Appointments /></Layout></ProtectedRoute>} />
+    <Route path="/telemedicine" element={<ProtectedRoute allowedRoles={['parent']}><Layout><Telemedicine /></Layout></ProtectedRoute>} />
+    <Route path="/notifications" element={<ProtectedRoute><Layout><Notifications /></Layout></ProtectedRoute>} />
+
+    {/* Doctor routes */}
+    <Route path="/doctor" element={<ProtectedRoute allowedRoles={['doctor']}><Layout><DoctorDashboard /></Layout></ProtectedRoute>} />
+    <Route path="/doctor/schedule" element={<ProtectedRoute allowedRoles={['doctor']}><Layout><DoctorDashboard /></Layout></ProtectedRoute>} />
+
+    {/* Admin routes */}
+    <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><Layout><AdminDashboard /></Layout></ProtectedRoute>} />
+    <Route path="/admin/doctors" element={<ProtectedRoute allowedRoles={['admin']}><Layout><AdminDashboard /></Layout></ProtectedRoute>} />
+    <Route path="/admin/patients" element={<ProtectedRoute allowedRoles={['admin']}><Layout><AdminDashboard /></Layout></ProtectedRoute>} />
+    <Route path="/admin/appointments" element={<ProtectedRoute allowedRoles={['admin']}><Layout><AdminDashboard /></Layout></ProtectedRoute>} />
+
+    <Route path="*" element={<NotFound />} />
+  </Routes>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
