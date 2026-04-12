@@ -11,6 +11,23 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { UserRole } from '@/types';
 
+const SPECIALTIES = [
+  { value: 'general_pediatrics', label: 'General Pediatrics' },
+  { value: 'neonatology', label: 'Neonatology' },
+  { value: 'pediatric_cardiology', label: 'Pediatric Cardiology' },
+  { value: 'pediatric_neurology', label: 'Pediatric Neurology' },
+  { value: 'pediatric_oncology', label: 'Pediatric Oncology' },
+  { value: 'pediatric_surgery', label: 'Pediatric Surgery' },
+  { value: 'pediatric_orthopedics', label: 'Pediatric Orthopedics' },
+  { value: 'pediatric_dermatology', label: 'Pediatric Dermatology' },
+  { value: 'pediatric_endocrinology', label: 'Pediatric Endocrinology' },
+  { value: 'pediatric_gastroenterology', label: 'Pediatric Gastroenterology' },
+  { value: 'pediatric_pulmonology', label: 'Pediatric Pulmonology' },
+  { value: 'pediatric_nephrology', label: 'Pediatric Nephrology' },
+  { value: 'child_psychiatry', label: 'Child Psychiatry' },
+  { value: 'other', label: 'Other' },
+];
+
 const Register = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -18,18 +35,36 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>('parent');
+  const [licenseNumber, setLicenseNumber] = useState('');
+  const [specialty, setSpecialty] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) { toast.error('Password must be at least 6 characters'); return; }
+    if (!name.trim()) { toast.error('Full name is required'); return; }
+    if (password.length < 8) { toast.error('Password must be at least 8 characters'); return; }
+    if (role === 'doctor') {
+      if (!licenseNumber.trim()) { toast.error('License number is required for doctors'); return; }
+      if (!specialty) { toast.error('Specialty is required for doctors'); return; }
+    }
     setLoading(true);
-    await register(name, email, password, role);
-    setLoading(false);
-    toast.success('Account created!');
-    if (role === 'admin') navigate('/admin');
-    else if (role === 'doctor') navigate('/doctor');
-    else navigate('/parent');
+    try {
+      await register(name, email, password, role,
+        role === 'doctor' ? { licenseNumber, specialty } : undefined
+      );
+      toast.success('Account created!');
+      if (role === 'admin') navigate('/admin');
+      else if (role === 'doctor') navigate('/doctor');
+      else navigate('/parent');
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string; errors?: { msg: string }[] } } })
+        ?.response?.data?.errors?.[0]?.msg
+        ?? (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+        ?? 'Registration failed. Please try again.';
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -50,7 +85,7 @@ const Register = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label>Full Name</Label>
-                <Input value={name} onChange={e => setName(e.target.value)} placeholder="Your name" required />
+                <Input value={name} onChange={e => setName(e.target.value)} placeholder="First and last name" required />
               </div>
               <div className="space-y-2">
                 <Label>Email</Label>
@@ -58,7 +93,7 @@ const Register = () => {
               </div>
               <div className="space-y-2">
                 <Label>Password</Label>
-                <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 6 characters" required />
+                <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 8 characters" required />
               </div>
               <div className="space-y-2">
                 <Label>I am a</Label>
@@ -71,6 +106,32 @@ const Register = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {role === 'doctor' && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Medical License Number</Label>
+                    <Input
+                      value={licenseNumber}
+                      onChange={e => setLicenseNumber(e.target.value)}
+                      placeholder="e.g. KMP/2024/001"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Specialty</Label>
+                    <Select value={specialty} onValueChange={setSpecialty}>
+                      <SelectTrigger><SelectValue placeholder="Select specialty" /></SelectTrigger>
+                      <SelectContent>
+                        {SPECIALTIES.map(s => (
+                          <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 Create Account
