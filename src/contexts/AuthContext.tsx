@@ -8,7 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string, role: UserRole) => Promise<boolean>;
+  register: (name: string, email: string, password: string, role: UserRole, extra?: { licenseNumber?: string; specialty?: string; phone?: string }) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -60,27 +60,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     name: string,
     email: string,
     password: string,
-    role: UserRole
+    role: UserRole,
+    extra?: { licenseNumber?: string; specialty?: string; phone?: string }
   ): Promise<boolean> => {
-    try {
-      const [firstName, ...rest] = name.trim().split(' ');
-      const lastName = rest.join(' ') || firstName;
-      const { user: u, token, refreshToken } = await authApi.register({
-        firstName,
-        lastName,
-        email,
-        password,
-        role,
-      });
-      localStorage.setItem('token', token);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(u));
-      setApiUser(u);
-      setUser(toFrontendUser(u));
-      return true;
-    } catch {
-      return false;
-    }
+    const [firstName, ...rest] = name.trim().split(' ');
+    const lastName = rest.join(' ') || firstName;
+    const { user: u, token, refreshToken } = await authApi.register({
+      firstName,
+      lastName,
+      email,
+      password,
+      role,
+      ...extra,
+    });
+    localStorage.setItem('token', token);
+    localStorage.setItem('refreshToken', refreshToken);
+    localStorage.setItem('user', JSON.stringify(u));
+    setApiUser(u);
+    setUser(toFrontendUser(u));
+    return true;
   }, []);
 
   const logout = useCallback(async () => {
