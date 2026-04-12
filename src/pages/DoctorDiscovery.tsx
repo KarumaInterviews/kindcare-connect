@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, MapPin, Star, Video, Clock, Loader2 } from 'lucide-react';
+import { Search, MapPin, Star, Video, Clock, Loader2, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const SPECIALTIES = [
@@ -22,13 +22,15 @@ const DoctorDiscovery = () => {
   const [search, setSearch] = useState('');
   const [specialty, setSpecialty] = useState('All');
   const [location, setLocation] = useState('All');
+  const [availableOnly, setAvailableOnly] = useState(false);
   const [locations, setLocations] = useState<string[]>(['All']);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params: Record<string, unknown> = { limit: 50, isAvailable: true };
+      const params: Record<string, unknown> = { limit: 100 };
       if (specialty !== 'All') params.specialty = specialty;
+      if (availableOnly) params.isAvailable = true;
       const res = await doctorsApi.list(params);
       const rows = res.data ?? [];
       setDoctors(rows);
@@ -36,7 +38,7 @@ const DoctorDiscovery = () => {
       setLocations(['All', ...locs]);
     } catch { /* silent */ }
     finally { setLoading(false); }
-  }, [specialty]);
+  }, [specialty, availableOnly]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -69,6 +71,13 @@ const DoctorDiscovery = () => {
             <SelectContent>{locations.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
           </Select>
         </div>
+        <button
+          onClick={() => setAvailableOnly(v => !v)}
+          className={`flex items-center gap-2 text-sm px-3 py-2 rounded-lg border transition-colors w-fit ${availableOnly ? 'bg-success/10 border-success/30 text-success' : 'border-border text-muted-foreground'}`}
+        >
+          <CheckCircle2 className="w-4 h-4" />
+          Available only
+        </button>
       </div>
 
       {/* Results */}

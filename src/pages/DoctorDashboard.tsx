@@ -1,13 +1,23 @@
 import { useState, useEffect } from 'react';
-import { appointmentsApi, type Appointment, type Child } from '@/lib/api';
+import { appointmentsApi, billingApi, type Appointment, type Child, type Invoice } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import StatusBadge from '@/components/StatusBadge';
-import { Calendar, Clock, Users, CheckCircle, XCircle, Loader2, Baby, Droplets, Heart, Syringe, ChevronRight, MapPin, Video } from 'lucide-react';
+import { Calendar, Clock, Users, CheckCircle, XCircle, Loader2, Baby, Droplets, Heart, Syringe, ChevronRight, MapPin, Video, Receipt, CreditCard, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+
+const invoiceStatusColor: Record<string, string> = {
+  issued: 'bg-blue-100 text-blue-700',
+  paid: 'bg-green-100 text-green-700',
+  overdue: 'bg-red-100 text-red-700',
+  cancelled: 'bg-gray-100 text-gray-500',
+  waived: 'bg-purple-100 text-purple-700',
+  draft: 'bg-yellow-100 text-yellow-700',
+};
 
 const safeArr = (v: unknown): unknown[] => {
   if (Array.isArray(v)) return v;
@@ -170,14 +180,21 @@ const AptDetail = ({ apt, open, onClose, onAction }: {
 // ── Main Doctor Dashboard ────────────────────────────────────────────────────
 const DoctorDashboard = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedApt, setSelectedApt] = useState<Appointment | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Child | null>(null);
 
   useEffect(() => {
-    appointmentsApi.list({ limit: 200 })
-      .then(r => setAppointments(r.data ?? []))
-      .catch(() => toast.error('Failed to load appointments'))
+    Promise.all([
+      appointmentsApi.list({ limit: 200 }),
+      billingApi.listInvoices({ limit: 100 }),
+    ])
+      .then(([aptRes, invRes]) => {
+        setAppointments(aptRes.data ?? []);
+        setInvoices(invRes.data ?? []);
+      })
+      .catch(() => toast.error('Failed to load dashboard data'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -199,6 +216,11 @@ const DoctorDashboard = () => {
   const patientMap = new Map<number, Child>();
   appointments.forEach(a => { if (a.child && !patientMap.has(a.childId)) patientMap.set(a.childId, a.child); });
   const patients = Array.from(patientMap.values());
+
+  // Billing stats
+  const paidInvoices = invoices.filter(i => i.status === 'paid');
+  const unpaidInvoices = invoices.filter(i => i.status === 'issued' || i.status === 'overdue');
+  const totalEarned = paidInvoices.reduce((s, i) => s + Number(i.totalAmount), 0);
 
   if (loading) return <div className="flex items-center justify-center h-48"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
 
@@ -270,12 +292,38 @@ const DoctorDashboard = () => {
         ))}
       </div>
 
+      {/* Billing Summary */}
+      <div className="grid grid-cols-3 gap-2">
+        <Card className="shadow-card border-l-2 border-l-success">
+          <CardContent className="p-3 text-center">
+            <DollarSign className="w-4 h-4 mx-auto mb-0.5 text-success" />
+            <p className="text-sm font-bold text-foreground">KES {totalEarned.toLocaleString()}</p>
+            <p className="text-[10px] text-muted-foreground">Earned</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-card border-l-2 border-l-primary">
+          <CardContent className="p-3 text-center">
+            <Receipt className="w-4 h-4 mx-auto mb-0.5 text-primary" />
+            <p className="text-sm font-bold text-foreground">{paidInvoices.length}</p>
+            <p className="text-[10px] text-muted-foreground">Paid</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-card border-l-2 border-l-warning">
+          <CardContent className="p-3 text-center">
+            <CreditCard className="w-4 h-4 mx-auto mb-0.5 text-warning" />
+            <p className="text-sm font-bold text-foreground">{unpaidInvoices.length}</p>
+            <p className="text-[10px] text-muted-foreground">Pending</p>
+          </CardContent>
+        </Card>
+      </div>
+
       <Tabs defaultValue="pending">
-        <TabsList className="w-full">
+        <TabsList className="w-full grid grid-cols-5">
           <TabsTrigger value="pending" className="flex-1">Pending ({pending.length})</TabsTrigger>
           <TabsTrigger value="confirmed" className="flex-1">Upcoming ({confirmed.length})</TabsTrigger>
           <TabsTrigger value="patients" className="flex-1">Patients ({patients.length})</TabsTrigger>
           <TabsTrigger value="history" className="flex-1">History ({completed.length})</TabsTrigger>
+          <TabsTrigger value="billing" className="flex-1">Billing ({invoices.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pending" className="mt-4 space-y-3">
@@ -344,6 +392,46 @@ const DoctorDashboard = () => {
             </motion.div>
           ))}
           {completed.length === 0 && <p className="text-center py-8 text-muted-foreground text-sm">No completed appointments</p>}
+        </TabsContent>
+
+        <TabsContent value="billing" className="mt-4 space-y-2">
+          {invoices.map((inv, i) => {
+            const childName = inv.child ? `${inv.child.firstName} ${inv.child.lastName}` : `Patient #${inv.childId}`;
+            const parentName = inv.parent?.user
+              ? `${inv.parent.user.firstName} ${inv.parent.user.lastName}`
+              : null;
+            return (
+              <motion.div key={inv.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+                <Card className={`shadow-card ${inv.status === 'overdue' ? 'border-l-4 border-l-destructive' : ''}`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-medium text-foreground text-sm">{inv.invoiceNumber}</p>
+                        <p className="text-xs text-muted-foreground">{childName}</p>
+                        {parentName && <p className="text-xs text-muted-foreground">Parent: {parentName}</p>}
+                        <p className="text-xs text-muted-foreground">Due: {inv.dueDate}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-foreground text-sm">KES {Number(inv.totalAmount).toLocaleString()}</p>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${invoiceStatusColor[inv.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                          {inv.status}
+                        </span>
+                        {inv.payments && inv.payments.length > 0 && (
+                          <p className="text-xs text-muted-foreground mt-1">{inv.payments.length} payment{inv.payments.length !== 1 ? 's' : ''}</p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
+          {invoices.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground text-sm">
+              <Receipt className="w-8 h-8 mx-auto mb-2 opacity-40" />
+              No billing records yet
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 

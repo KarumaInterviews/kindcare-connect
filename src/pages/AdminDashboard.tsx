@@ -3,9 +3,11 @@ import { adminApi, doctorsApi, childrenApi, appointmentsApi, type AdminDashboard
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import StatusBadge from '@/components/StatusBadge';
-import { Users, Stethoscope, Calendar, Activity, Loader2, Star, MapPin, Phone, Mail, Search, ChevronRight, Heart, Syringe, Droplets } from 'lucide-react';
+import { Users, Stethoscope, Calendar, Activity, Loader2, Star, MapPin, Phone, Mail, Search, ChevronRight, Heart, Syringe, Droplets, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
@@ -16,10 +18,31 @@ const safeArr = (v: unknown): unknown[] => {
   return [];
 };
 
-const DoctorDetail = ({ doc, open, onClose }: { doc: Doctor | null; open: boolean; onClose: () => void }) => {
+const DoctorDetail = ({ doc, open, onClose, onFeeUpdated }: {
+  doc: Doctor | null; open: boolean; onClose: () => void;
+  onFeeUpdated: (docId: number, newFee: number) => void;
+}) => {
+  const [editingFee, setEditingFee] = useState(false);
+  const [feeInput, setFeeInput] = useState('');
+  const [savingFee, setSavingFee] = useState(false);
+
   if (!doc) return null;
   const name = doc.user ? `Dr. ${doc.user.firstName} ${doc.user.lastName}` : `Doctor #${doc.id}`;
   const sched = safeArr(doc.availabilitySchedule) as { day: string; startTime: string; endTime: string }[];
+
+  const handleSaveFee = async () => {
+    const fee = Number(feeInput);
+    if (!fee || fee <= 0) { toast.error('Enter a valid fee amount'); return; }
+    setSavingFee(true);
+    try {
+      await doctorsApi.update(doc.id, { consultationFee: fee });
+      onFeeUpdated(doc.id, fee);
+      setEditingFee(false);
+      toast.success('Consultation fee updated');
+    } catch { toast.error('Failed to update fee'); }
+    finally { setSavingFee(false); }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
@@ -45,9 +68,34 @@ const DoctorDetail = ({ doc, open, onClose }: { doc: Doctor | null; open: boolea
           </div>
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="bg-muted/50 rounded-lg p-3"><p className="text-xl font-bold text-foreground">{doc.yearsOfExperience}</p><p className="text-xs text-muted-foreground">Yrs Exp</p></div>
-            <div className="bg-muted/50 rounded-lg p-3"><p className="text-base font-bold text-foreground">KES {Number(doc.consultationFee).toLocaleString()}</p><p className="text-xs text-muted-foreground">Fee</p></div>
+            <div className="bg-muted/50 rounded-lg p-3 relative">
+              <p className="text-base font-bold text-foreground">KES {Number(doc.consultationFee).toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Fee</p>
+              <button onClick={() => { setFeeInput(String(doc.consultationFee)); setEditingFee(true); }} className="absolute top-1 right-1 p-0.5 text-muted-foreground hover:text-primary"><Pencil className="w-3 h-3" /></button>
+            </div>
             <div className="bg-muted/50 rounded-lg p-3"><p className="text-xl">{doc.isAvailable ? '✅' : '❌'}</p><p className="text-xs text-muted-foreground">Available</p></div>
           </div>
+
+          {editingFee && (
+            <div className="border border-primary/20 rounded-lg p-3 bg-primary/5 space-y-2">
+              <Label className="text-xs font-semibold text-primary uppercase">Set Consultation Fee (KES)</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  value={feeInput}
+                  onChange={e => setFeeInput(e.target.value)}
+                  placeholder="e.g. 3000"
+                  className="flex-1"
+                  min={0}
+                />
+                <Button size="sm" onClick={handleSaveFee} disabled={savingFee}>
+                  {savingFee ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingFee(false)}>Cancel</Button>
+              </div>
+            </div>
+          )}
+
           {doc.bio && <div><p className="text-xs font-semibold text-muted-foreground uppercase mb-1">About</p><p className="text-sm text-foreground">{doc.bio}</p></div>}
           {doc.education && <div><p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Education</p><p className="text-sm text-foreground">{doc.education}</p></div>}
           <div><p className="text-xs font-semibold text-muted-foreground uppercase mb-1">License No.</p><p className="text-sm font-mono text-foreground">{doc.licenseNumber}</p></div>
@@ -336,7 +384,15 @@ const AdminDashboard = () => {
         </TabsContent>
       </Tabs>
 
-      <DoctorDetail doc={selectedDoc} open={!!selectedDoc} onClose={() => setSelectedDoc(null)} />
+      <DoctorDetail
+        doc={selectedDoc}
+        open={!!selectedDoc}
+        onClose={() => setSelectedDoc(null)}
+        onFeeUpdated={(docId, fee) => {
+          setDoctors(prev => prev.map(d => d.id === docId ? { ...d, consultationFee: fee } : d));
+          setSelectedDoc(prev => prev && prev.id === docId ? { ...prev, consultationFee: fee } : prev);
+        }}
+      />
       <ChildDetail child={selectedChild} open={!!selectedChild} onClose={() => setSelectedChild(null)} />
       <AppointmentDetail apt={selectedApt} open={!!selectedApt} onClose={() => setSelectedApt(null)} />
     </div>
