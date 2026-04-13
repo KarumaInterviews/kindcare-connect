@@ -50,7 +50,7 @@ const BookAppointment = () => {
         doctorId: Number(doctorId),
         childId: Number(childId),
         appointmentDate,
-        appointmentTime: `${appointmentTime}:00`,
+        appointmentTime,
         type,
         reason,
         durationMinutes: 30,
